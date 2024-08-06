@@ -1,4 +1,4 @@
-const express = require("express");
+/* const express = require("express");
 const router = express.Router();
 
 // ℹ️ Handles password encryption
@@ -45,7 +45,7 @@ router.post("/signup", (req, res, next) => {
 
   // Check the users collection if a user with the same email already exists
   User.findOne({ email })
-    .then((foundUser) => {
+    .then(foundUser => {
       // If the user with the same email already exists, send an error response
       if (foundUser) {
         res.status(400).json({ message: "User already exists." });
@@ -60,7 +60,7 @@ router.post("/signup", (req, res, next) => {
       // We return a pending promise, which allows us to chain another `then`
       return User.create({ email, password: hashedPassword, name });
     })
-    .then((createdUser) => {
+    .then(createdUser => {
       // Deconstruct the newly created user object to omit the password
       // We should never expose passwords publicly
       const { email, name, _id } = createdUser;
@@ -71,7 +71,7 @@ router.post("/signup", (req, res, next) => {
       // Send a json response containing the user object
       res.status(201).json({ user: user });
     })
-    .catch((err) => next(err)); // In this case, we send error handling to the error handling middleware.
+    .catch(err => next(err)); // In this case, we send error handling to the error handling middleware.
 });
 
 // POST  /auth/login - Verifies email and password and returns a JWT
@@ -86,7 +86,7 @@ router.post("/login", (req, res, next) => {
 
   // Check the users collection if a user with the same email exists
   User.findOne({ email })
-    .then((foundUser) => {
+    .then(foundUser => {
       if (!foundUser) {
         // If the user is not found, send an error response
         res.status(401).json({ message: "User not found." });
@@ -106,7 +106,7 @@ router.post("/login", (req, res, next) => {
         // Create a JSON Web Token and sign it
         const authToken = jwt.sign(payload, process.env.TOKEN_SECRET, {
           algorithm: "HS256",
-          expiresIn: "6h",
+          expiresIn: "10d",
         });
 
         // Send the token as the response
@@ -115,7 +115,7 @@ router.post("/login", (req, res, next) => {
         res.status(401).json({ message: "Unable to authenticate the user" });
       }
     })
-    .catch((err) => next(err)); // In this case, we send error handling to the error handling middleware.
+    .catch(err => next(err)); // In this case, we send error handling to the error handling middleware.
 });
 
 // GET  /auth/verify  -  Used to verify JWT stored on the client
@@ -125,6 +125,135 @@ router.get("/verify", isAuthenticated, (req, res, next) => {
   console.log(`req.payload`, req.payload);
 
   // Send back the token payload object containing the user data
+  res.status(200).json(req.payload);
+});
+
+module.exports = router;
+ */
+
+
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { isAuthenticated } = require("../middlewares/jwt.middleware");
+
+const User = require("../models/User.model");
+const router = express.Router();
+
+const saltRounds = 10;
+
+//POST - Signup
+router.post("/signup", async (req, res, next) => {
+  try {
+    //accept the information from the client
+    const { username, email, password, profilePic } = req.body;
+    //check if the user already exists
+    if (username === "" || email === "" || password === "") {
+      res
+        .status(400)
+        .json({ message: "Please provide username, email and password" });
+      return;
+    }
+
+    //check if email is valid
+    //regex - regular expressions
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    //test does check the root /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/ is correct or not if okay pass the test if not then fails
+    if (!emailRegex.test(email)) {
+      res.status(400).json({ message: "Please provide a valid email address" });
+      return;
+    }
+
+    //check if password is valid
+    const passwordRegex = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}/;
+    if (!passwordRegex.test(password)) {
+      res.status(400).json({
+        message:
+          "Your password needs to contain at least a number, a lowercase letter, an uppercase letter and have at least 6 characters",
+      });
+      return;
+    }
+    //check if the user already exists
+
+    const userExists = await User.findOne({ email }); //findOne help us to return object
+    if (userExists) {
+      res.status(400).json({ message: "User already exists" });
+      return;
+    }
+
+    // Create the user
+    //hash a password
+    const salt = bcrypt.genSaltSync(saltRounds);
+    const hashedPassword = bcrypt.hashSync(password, salt);
+
+    const newUser = await User.create({
+      username,
+      email,
+      password: hashedPassword,
+      profilePic: profilePic ? profilePic : "https://e7.pngegg.com/pngimages/978/632/png-clipart-pokemon-pikachu-illustration-pokemon-yellow-pokemon-go-great-detective-pikachu-pikachu-mammal-vertebrate-thumbnail.png"
+    });
+    //newUser = {username: "Psyduck", email: "psy@duck.com", password: 84574586495ruty@#}
+    const cleanUser = {
+      _id: newUser._id,
+      username: newUser.username,
+      email: newUser.email,
+      profilePic: newUser.profilePic,
+    };
+    res.status(201).json(cleanUser);
+  } catch (error) {
+    console.log(error);
+    next(error); // just passing the error for checking in error-handling
+  }
+});
+
+//POST - Login
+router.post("/login", async (req, res, next) => {
+  try {
+    const { password, email } = req.body;
+    if (email === "" || password === "") {
+      res.status(400).json({ message: "Provide email and password" });
+      return;
+    }
+    //check if the user exists
+    const userExists = await User.findOne({ email });
+    if (!userExists) {
+      res.status(400).json({ message: "Email not found" });
+      return;
+    }
+    //compare password
+    const passwordCorrect = bcrypt.compareSync(password, userExists.password);
+    //const passwordCorrect = bcrypt.compare("directoh4884@", "djkfdf8643867%$><?gkjrrighr87458")
+    if (!passwordCorrect) {
+      res.status(400).json({ message: "Invalid credentials" });
+      return;
+    }
+
+    //create a jwt token
+
+    //secret key
+
+    //payload
+    const { _id, username } = userExists;
+    const payload = {
+      _id: userExists._id,
+      username: userExists.username,
+      email,
+      profilePic: userExists.profilePic,
+    };
+    const authToken = jwt.sign(payload, process.env.TOKEN_SECRET, {
+      algorithm: "HS256",
+      expiresIn: "14d",
+    });
+    res.status(200).json({ authToken: authToken });
+  } catch (error) {
+    console.log(error);
+    next(error); // just passing the error for checking in error-handling
+  }
+});
+
+//GET - Verify
+router.get("/verify", isAuthenticated, async (req, res, next) => {
+  //req.payload exists because the middleware validated the user and gave back the payload
   res.status(200).json(req.payload);
 });
 

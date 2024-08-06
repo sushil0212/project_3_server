@@ -1,27 +1,37 @@
-// ℹ️ Gets access to environment variables/settings
-// https://www.npmjs.com/package/dotenv
 require("dotenv").config();
 
-// ℹ️ Connects to the database
-require("./db");
-
-// Handles http requests (express is node js framework)
-// https://www.npmjs.com/package/express
 const express = require("express");
+const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const authRoutes = require("./routes/auth.routes");
+const jobRoutes = require("./routes/jobs.routes");
+const shortRoutes = require("./routes/shorts.routes");
+const { isAuthenticated } = require("./middleware/jwt.middleware");
 
+// Initialize express app
 const app = express();
 
-// ℹ️ This function is getting exported from the config folder. It runs most pieces of middleware
-require("./config")(app);
+// Middleware setup
+app.use(bodyParser.json());
+app.use(cors());
 
-// 👇 Start handling routes here
-const indexRoutes = require("./routes/index.routes");
-app.use("/api", indexRoutes);
+// Database connection
+mongoose
+  .connect(process.env.MONGODB_URI || "mongodb://localhost/job-shorts", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("MongoDB connected"))
+  .catch(err => console.log(err));
 
-const authRoutes = require("./routes/auth.routes");
+// Route setup
 app.use("/auth", authRoutes);
+app.use("/api/jobs", isAuthenticated, jobRoutes);
+app.use("/api/shorts", shortRoutes);
 
-// ❗ To handle errors. Routes that don't exist or errors that you handle in specific routes
+// Error handling
 require("./error-handling")(app);
 
+// Export the app
 module.exports = app;
