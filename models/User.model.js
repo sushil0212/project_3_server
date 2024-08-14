@@ -1,3 +1,4 @@
+//user.model.js
 const { Schema, model } = require("mongoose");
 
 // TODO: Please make sure you edit the User model to whatever makes sense in this case
@@ -20,7 +21,17 @@ const userSchema = new Schema(
       type: String,
       required: [true, "userName is required."],
     },
-    cvUrl: { type: String, required: true },
+    cvUrl: { type: String },
+    companyInfo: {
+      type: Schema.Types.ObjectId,
+      ref: "Job",
+    },
+    shorts: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Short",
+      },
+    ],
   },
   {
     // this second object adds extra properties: `createdAt` and `updatedAt`
