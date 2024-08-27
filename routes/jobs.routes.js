@@ -3,6 +3,8 @@ const router = express.Router();
 const Job = require("../models/Job.model");
 const User = require("../models/User.model");
 
+const Activity = require("../models/Activity.model");
+
 // Create Job
 router.post("/create/:userId", async (req, res) => {
   try {
@@ -37,6 +39,12 @@ router.post("/create/:userId", async (req, res) => {
 
     // Update user with the new job's ID
     await User.findByIdAndUpdate(userId, { companyInfo: job._id });
+
+    // Track the job creation activity
+    await Activity.create({
+      type: "job_creation",
+      userId,
+    });
 
     res.status(201).json({ message: "Job created successfully!", job });
   } catch (error) {
@@ -88,5 +96,7 @@ router.delete("/:id", async (req, res) => {
     res.status(500).json({ message: "Error deleting job." });
   }
 });
+
+//Add activity logging
 
 module.exports = router;

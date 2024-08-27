@@ -186,7 +186,7 @@ router.post("/delete-profile-pic", isAuthenticated, async (req, res, next) => {
     };
     const authToken = jwt.sign(payload, process.env.TOKEN_SECRET, {
       algorithm: "HS256",
-      expiresIn: "50d",
+      expiresIn: "70d",
     });
 
     res.status(200).json({ authToken });

@@ -1,4 +1,4 @@
-//short.model.js
+// models/Short.model.js
 const { Schema, model } = require("mongoose");
 
 const shortSchema = new Schema({
@@ -11,10 +11,18 @@ const shortSchema = new Schema({
   qualification: { type: String },
   experience: { type: String },
   workingDays: { type: String },
-  comments: [{ type: String }],
+  vacancies: { type: Number },
+  comments: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Comment",
+    },
+  ],
   likes: [{ type: Schema.Types.ObjectId, ref: "User" }],
   dislikes: [{ type: Schema.Types.ObjectId, ref: "User" }],
   userId: { type: Schema.Types.ObjectId, ref: "User" },
+  likeCount: { type: Number, default: 0 },
+  dislikeCount: { type: Number, default: 0 },
 });
 
 const Short = model("Short", shortSchema);
