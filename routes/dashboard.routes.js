@@ -2,19 +2,24 @@
 const express = require("express");
 const router = express.Router();
 const Activity = require("../models/Activity.model");
+const Notification = require("../models/Notification.model");
 const Short = require("../models/Short.model");
 const User = require("../models/User.model");
 const { isAuthenticated } = require("../middleware/jwt.middleware");
 
 router.get("/data", isAuthenticated, async (req, res) => {
+  console.log(req.payload);
   try {
     // Fetch user count
     const userCount = await User.countDocuments();
 
     // Fetch CV uploads count (assuming type 'cv_upload' represents CV uploads)
-    const cvUploadCount = await Activity.countDocuments({ type: "cv_upload" });
-
     // Fetch like count (sum of all likes on shorts)
+    const cvUploadCount = await Notification.countDocuments({
+      type: "cv_uploaded",
+      recipient: req.payload._id,
+    });
+
     const likeCount = await Short.aggregate([
       { $unwind: "$likes" },
       { $count: "likeCount" },
