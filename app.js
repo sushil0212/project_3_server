@@ -16,6 +16,9 @@ const notificationRoutes = require("./routes/notifications.routes");
 
 const dashboardRoutes = require("./routes/dashboard.routes");
 
+
+const savedShortsRoutes = require("./routes/savedShorts.routes");
+
 // Initialize express app
 const app = express();
 
@@ -41,6 +44,9 @@ app.use("/api", indexRoutes);
 app.use("/api/notifications", isAuthenticated, notificationRoutes);
 
 app.use("/api/dashboard", isAuthenticated, dashboardRoutes);
+
+
+app.use("/api/saved-shorts", isAuthenticated, savedShortsRoutes);
 
 /* // Error handling
 require("./error-handling")(app); */
