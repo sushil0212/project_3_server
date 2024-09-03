@@ -54,14 +54,14 @@ router.post(
       user.cvUrl = req.file.path;
       await user.save();
 
-      // Create a notification for the company if the companyInfo is present
+      // Create a notification for the company if the company exists
       if (company) {
         await Notification.create({
           recipient: company._id,
           type: "cv_uploaded",
           message: `${user.username} has uploaded a new CV.`,
-          cvId: req.file.path, // URL notification
-          sender: userId, // Tracking the CV
+          cvId: req.file.path,
+          sender: userId, // Tracking the user who uploaded the CV
         });
       }
 

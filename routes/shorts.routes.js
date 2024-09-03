@@ -65,7 +65,7 @@ router.post("/create/:userId", async (req, res) => {
     const payload = {
       script: {
         type: "text",
-        input: `${position}, available vacancies ${vacancies}, with the salary`,
+        input: /* `${position}, available vacancies ${vacancies}, with the salary`, */ `Hi there, i am speaking on behalf of the company, we are hiring for a${position} with ${vacancies},the yearly salary is ${salary}euro, and the working week consists of ${workingDays}, the role is for a ${role}, and a ${experience} can apply `,
       },
       presenter_id: "amy-Aq6OmGZnMt",
       driver_id: "Vcq0R4a8F0",
@@ -287,6 +287,5 @@ router.post("/dislike/:shortId", async (req, res) => {
     res.status(500).json({ message: "Error disliking short." });
   }
 });
-
 
 module.exports = router;
